@@ -1,0 +1,72 @@
+# Copiloto de Dados Operacionais B2B (Text-to-SQL)
+
+Esta poc foi desenvolvida para o desafio técnico de **Business Innovation Developer** O projeto consiste em um assistente de IA que permite a gestores consultarem bases de dados complexas usando linguagem natural
+
+---
+
+## 1. Definição do Problema e Público
+* **Público-Alvo:** Gestores operacionais, coordenadores de logística e diretores B2B
+* **O Problema:** Atualmente, o acesso a dados críticos (saldos, status de chamados, inadimplência) exige que o gestor interrompa seu fluxo de trabalho para acessar um ERP complexo ou solicitar relatórios ao time de TI
+* **Impacto:** Lentidão na tomada de decisão, sobrecarga do time de dados e alta fricção no acesso à informação em campo
+
+## 2. Solução Proposta
+Um **Copiloto Inteligente** baseado em LLM (Gemini 2.5 Flash) que atua como uma camada de interface entre o usuário e o banco de dados relacional. A solução utiliza a técnica de **Text-to-SQL** para traduzir perguntas humanas em consultas técnicas de forma instantânea
+
+## 3. Plano de Validação 
+Para validar a hipótese de valor em apenas 5 dias úteis:
+* **Fase 1 (D+0):** Definição do esquema de dados espelho do ERP em SQLite
+* **Fase 2 (D+1):** Implementação da interface de chat via **Streamlit** (foco em UX rápida) ou criação de uma interface simples
+* **Fase 3 (D+2):** Testes de estresse com **Few-Shot Prompting** para garantir precisão nas consultas
+* **Fase 4 (D+3 a D+5):** Disponibilização da URL (Streamlit Cloud ou Túnel) para 3 usuários reais testarem em ambiente controlado com dados simulados
+* **Objetivo da Validação:** Medir o engajamento (usuários voltaram a usar no dia seguinte?) e o NPS qualitativo da experiência.
+
+## 4. KPIs de Sucesso
+* **Métricas de Negócio:**
+    * **Redução Tempo Médio de Acesso:** Meta de reduzir o tempo necessário para acessar a informação, ponto importante é que não adianta a aplicação funcionar, se o tempo de resposta for maior que uma consulta manual
+    * **Taxa de Adoção:** Percentual de perguntas feitas via Copiloto vs. Chamados abertos para o time de BI
+* **Métricas Técnicas:**
+    * **Assertividade da Query:** Percentual de SQLs geradas sem erros de sintaxe (Meta: > 90%)
+    * **Efetividade dos Guardrails:** 100% de bloqueio em tentativas de comandos DML (Insert/Delete)
+
+## 5. Decisões Técnicas e Arquitetura Defensiva
+* **Engine:** `gemini-2.5-flash-lite` pela baixíssima latência e custo-beneficio para testes rápidos
+* **Orquestração:** **LangChain**, permitindo uma arquitetura modular de prompts e parsers
+* **Segurança (Defesa em Profundidade):**
+    * **Input Guardrail (Regex):** Bloqueio instantâneo de tentativas de varredura de metadados (`SHOW TABLES`, etc.) via Python, economizando tokens e latência (Quando usuário tenta inserir, o sistema bloqueia evitando o gasto de token de input/output e processamento)
+    * **Few-Shot Prompting:** Injeção de exemplos reais no prompt para guiar a lógica da IA
+    * **Output Validation:** Camada de interceptação em Python que valida a SQL gerada antes da execução, proibindo qualquer comando que não seja `SELECT`
+
+## 6. Trade-offs
+1.  **SQLite vs SQL Server/PostgreSQL:** Optei por SQLite para este MVP para garantir portabilidade total e "Zero Setup" para os avaliadores
+2.  **Sessão Local vs Persistente:** Em uma aplicação em produção o historico de chat é mantido em memória, priorizando velocidade de desenvolvimento sobre a persistência histórica
+
+---
+
+## Como Executar
+
+1.  **Clone o repositório:**
+    ```bash
+    git clone [https://github.com/luandemitry/piloto-operacional-poc.git](https://github.com/luandemitry/piloto-operacional-poc.git)
+    cd seu-repositorio
+    ```
+
+2.  **Instale as dependências:**
+    ```bash
+    pip install -r requirements.txt
+    ```
+
+3.  **Configure o Ambiente:**
+    Crie um arquivo `.env` na raiz e adicione sua chave:
+    ```text
+    GEMINI_API_KEY=sua_chave (Pode ser gerada no Google AI Studio)
+    ```
+
+4.  **Prepare o Banco de Dados:**
+    ```bash
+    python setup_db.py
+    ```
+
+5.  **Rode o Copiloto:**
+    ```bash
+    streamlit run app.py
+    ```
