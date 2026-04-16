@@ -68,5 +68,5 @@ Para validar a hipótese de valor em apenas 5 dias úteis:
 
 5.  **Rode o Copiloto:**
     ```bash
-    streamlit run app.py
+    python -m streamlit run app.py
     ```
