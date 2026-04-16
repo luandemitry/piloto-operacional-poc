@@ -52,7 +52,7 @@ Para validar a hipótese de valor em apenas 5 dias úteis:
 
 2.  **Instale as dependências:**
     ```bash
-    pip install -r requirements.txt
+    python -m pip install -r requirements.txt
     ```
 
 3.  **Configure o Ambiente:**
